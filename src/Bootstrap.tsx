@@ -17,7 +17,7 @@ export function Bootstrap({ children }: { children: React.ReactNode }) {
     (async () => {
       let user = getStoredUser();
 
-      if (!user?.id) {
+      if (!user?.secret) {
         user = await createUser();
       }
 

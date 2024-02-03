@@ -1,7 +1,8 @@
+import { config } from "@/config";
 import { HTTP } from "@/lib/Http";
 import { getUser as getStoreUser, setUser, setUserName } from "@/store/user";
 
-const userApi = new HTTP("http://localhost:5000/users");
+const userApi = new HTTP(new URL("users", config.API_URL));
 
 type AuthenticatedUser = {
   id: string;

@@ -9,4 +9,10 @@ export default defineConfig({
     },
   },
   plugins: [react()],
+  envPrefix: "CLIENT",
+  server: {
+    port: 3000,
+    host: "0.0.0.0",
+    open: true,
+  },
 });

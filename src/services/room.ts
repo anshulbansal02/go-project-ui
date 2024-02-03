@@ -1,8 +1,9 @@
+import { config } from "@/config";
 import { HTTP } from "@/lib/Http";
 import { setRoom } from "@/store/room";
 import { getUser } from "@/store/user";
 
-const roomApi = new HTTP("http://localhost:5000/rooms");
+const roomApi = new HTTP(new URL("rooms", config.API_URL));
 
 export async function createNewRoom() {
   type RoomResponse = {

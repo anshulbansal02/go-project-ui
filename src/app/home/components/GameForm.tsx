@@ -16,28 +16,34 @@ export default function GameForm() {
     }
   };
 
-  const handleJoinRoom = async (data: RoomCodeForm) => {
-    await updateUser();
+  const { execute: handleJoinRoom, loading: loadingJoinRoom } = useAction(
+    async (data: RoomCodeForm) => {
+      await updateUser();
+      await joinRoomWithCode(data.code);
+    }
+  );
 
-    await joinRoomWithCode(data.code);
-  };
+  const { execute: handlePlayNow, loading: loadingPlayNow } = useAction(
+    async () => {
+      await updateUser();
+      // Implementation Deferred
+    }
+  );
 
-  const handlePlayNow = async () => {
-    await updateUser();
-  };
+  const { execute: handleCreateRoom, loading: loadingCreateRoom } = useAction(
+    async () => {
+      await updateUser();
 
-  const { execute: handleCreateRoom, loading } = useAction(async () => {
-    await updateUser();
-
-    const room = await createNewRoom();
-
-    console.log(room);
-  });
+      await createNewRoom();
+    }
+  );
 
   const { register, handleSubmit, getValues } = useForm<UserNameForm>({
     mode: "onSubmit",
     reValidateMode: "onChange",
   });
+
+  const loading = loadingCreateRoom || loadingJoinRoom || loadingPlayNow;
 
   return (
     <form
@@ -59,6 +65,7 @@ export default function GameForm() {
           <Button className='w-full'>Join Room</Button>
         </RoomCodeModal>
       </div>
+      {loading && <p>Loading...</p>}
     </form>
   );
 }

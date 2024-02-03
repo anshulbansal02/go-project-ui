@@ -3,9 +3,12 @@ import axios, { AxiosInstance } from "axios";
 export class HTTP {
   private transport: AxiosInstance;
 
-  constructor(baseURL: string) {
+  constructor(baseURL: string | URL) {
     this.transport = axios.create({
-      baseURL,
+      baseURL: baseURL.toString(),
+      paramsSerializer: (params) => {
+        return new URLSearchParams(params).toString();
+      },
     });
   }
 
