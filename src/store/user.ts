@@ -1,39 +1,38 @@
 import { create } from "zustand";
+
 import { persist } from "zustand/middleware";
 
-export interface UserState {
+export type User = {
+  id: string;
   name: string;
   secret: string;
-}
+};
 
-export const userStore = create(
-  persist(
-    () => ({
-      name: "",
-      secret: "",
-    }),
-    {
-      name: "user",
-    }
-  )
+export type UserState = User | undefined;
+
+const initialState = undefined;
+
+const userStore = create<UserState>()(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  persist((_) => initialState, { name: "user" })
 );
 
-export function setUser(user: { name: string; secret: string }) {
+export function setUser(user: User) {
   userStore.setState(() => user);
 }
 
-export function updateName(name: string) {
+export function getUser() {
+  return userStore.getState();
+}
+
+export function useUser() {
+  const user = userStore();
+  if (!user) throw new Error("User is not created.");
+  return user;
+}
+
+export function setUserName(name: string) {
   userStore.setState(() => ({
     name,
   }));
-}
-
-export function updateSecret(secret: string) {
-  userStore.setState(() => ({
-    secret,
-  }));
-}
-
-export function useUser(): UserState {
-  return userStore();
 }

@@ -1,53 +1,42 @@
 import { Button, Input } from "@/components";
 import { type RoomCodeForm, RoomCodeModal } from "./RoomCodeModal";
 import { useForm } from "react-hook-form";
-import { createUser, joinRoomWithCode, updateUserName } from "@/services";
 import { useUser } from "@/store/user";
-import { useSocket } from "@/lib/WebSocket";
-import * as Events from "@/events";
+import { createNewRoom, joinRoomWithCode } from "@/services/room";
+import { updateUserName } from "@/services/user";
+import useAction from "@/lib/hooks/useAction";
 
 export default function GameForm() {
-  const { socket } = useSocket();
-
   const user = useUser();
 
-  const handleJoinRoom = async (data: RoomCodeForm) => {
-    await ensureAssociatedUser();
-
-    await joinRoomWithCode();
-  };
-
-  const handlePlayNow = async (data: UserNameForm) => {
-    await ensureAssociatedUser();
-  };
-
-  const handleCreateRoom = async () => {
-    await ensureAssociatedUser();
-  };
-
-  const ensureAssociatedUser = async () => {
+  const updateUser = async () => {
     const inputUsername = getValues("name");
-
-    let updatedUser;
-    // Anonymous User
-    if (!user.secret) updatedUser = await createUser(inputUsername);
-    // User edited Username
-    else if (user.name !== inputUsername)
-      updatedUser = await updateUserName(inputUsername);
-    // Existing User
-    else updatedUser = user;
-
-    await socket.request(Events.AssociateClient, {
-      userSecret: updatedUser.secret,
-    } as Events.AssociateClientData);
+    if (inputUsername != user.name) {
+      await updateUserName(inputUsername);
+    }
   };
+
+  const handleJoinRoom = async (data: RoomCodeForm) => {
+    await updateUser();
+
+    await joinRoomWithCode(data.code);
+  };
+
+  const handlePlayNow = async () => {
+    await updateUser();
+  };
+
+  const { execute: handleCreateRoom, loading } = useAction(async () => {
+    await updateUser();
+
+    const room = await createNewRoom();
+
+    console.log(room);
+  });
 
   const { register, handleSubmit, getValues } = useForm<UserNameForm>({
     mode: "onSubmit",
     reValidateMode: "onChange",
-    resetOptions: {
-      keepErrors: false,
-    },
   });
 
   return (
@@ -59,7 +48,7 @@ export default function GameForm() {
         {...register("name")}
         placeholder='What would you like to call yourself?'
         className='text-center'
-        defaultValue={user.name}
+        defaultValue={user?.name}
       />
       <Button type='submit'>Play Now</Button>
       <div className='flex gap-3'>
