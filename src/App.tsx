@@ -2,8 +2,9 @@ import "@/styles/global.scss";
 
 import { AppRouterProvider } from "@/app/routes";
 import { SocketProvider } from "@/lib/WebSocket";
+import { config } from "@/config";
+import { Toaster } from "@/components";
 import { Bootstrap } from "./Bootstrap";
-import { config } from "./config";
 
 function App() {
   return (
@@ -11,6 +12,7 @@ function App() {
       <Bootstrap>
         <AppRouterProvider />
       </Bootstrap>
+      <Toaster />
     </SocketProvider>
   );
 }

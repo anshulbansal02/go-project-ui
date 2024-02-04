@@ -8,3 +8,9 @@ export interface RoomUserData {
   roomId: string;
   userId: string;
 }
+
+export const JoinRequest = "join_request";
+
+export interface RequestData {
+  userId: string;
+}

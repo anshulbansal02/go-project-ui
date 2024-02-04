@@ -10,11 +10,13 @@ import LobbyPage from "./(lobby)";
 import { Button, Input } from "@/components";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { useSocket } from "@/lib/WebSocket";
 
 export default function RoomPage() {
   const room = useRoom();
   const user = useUser();
   const params = useParams();
+  const { socket } = useSocket();
 
   const code = params["code"] as string;
 
@@ -46,17 +48,29 @@ export default function RoomPage() {
     }
   });
 
+  useEvent<Events.RequestData>(Events.JoinRequest, (m) => {
+    // Show notification to user using toaster
+  });
+
+  const handleJoinRequestAction = (
+    action: "accepted" | "rejected",
+    userId: string
+  ) => {
+    console.log(action, userId);
+    // Emit action
+  };
+
+  const handleUpdateUserName = async (data: UserNameForm) => {
+    await updateUserName(data.name);
+    setUserName(data.name);
+  };
+
   if (room?.id) {
     if (code !== room.code) return <Navigate to={`room/${room.code}`} />;
 
     // render lobby/arena ui
     return <LobbyPage />;
   }
-
-  const handleUpdateUserName = async (data: UserNameForm) => {
-    await updateUserName(data.name);
-    setUserName(data.name);
-  };
 
   // ask username if anon user
   if (user.isAnonymous) {
@@ -77,7 +91,7 @@ export default function RoomPage() {
 
   // Show loading screen
 
-  return <Navigate to='/' />;
+  return <>Waiting for request to be accepted</>;
 }
 
 type UserNameForm = {

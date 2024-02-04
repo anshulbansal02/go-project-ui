@@ -10,7 +10,6 @@ function SplashScreen() {
 
 export function Bootstrap({ children }: { children: React.ReactNode }) {
   const [isBootstrapped, setIsBootstrapped] = useState(false);
-
   const { socket, isConnected } = useSocket();
 
   useEffect(() => {
