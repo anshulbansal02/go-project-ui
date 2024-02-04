@@ -1,19 +1,20 @@
 import { config } from "@/config";
 import { HTTP } from "@/lib/Http";
-import { setRoom } from "@/store/room";
+import { Room } from "@/store/room";
 import { getUser } from "@/store/user";
+import { getUsers } from "./user";
 
 const roomApi = new HTTP(new URL("rooms", config.API_URL));
 
-export async function createNewRoom() {
-  type RoomResponse = {
-    id: string;
-    code: string;
-    type: string;
-    participantIds: string[];
-    adminId: string;
-  };
+type RoomResponse = {
+  id: string;
+  code: string;
+  type: string;
+  participantIds: string[];
+  adminId: string;
+};
 
+export async function createNewRoom() {
   const user = getUser();
 
   if (!user) throw new Error("User is not created.");
@@ -22,14 +23,14 @@ export async function createNewRoom() {
     adminId: user.id,
   });
 
-  const populatedRoom = {
+  const populatedRoom: Room = {
     id: room.id,
     code: room.code,
     participants: [user],
     admin: user,
   };
 
-  return setRoom(populatedRoom);
+  return populatedRoom;
 }
 
 export async function joinRoomWithCode(code: string) {
@@ -37,3 +38,18 @@ export async function joinRoomWithCode(code: string) {
 }
 
 export async function joinPublicRoom() {}
+
+export async function getRoom(id: string) {
+  const roomData = await roomApi.get<RoomResponse>(`/${id}`);
+
+  const users = await getUsers(roomData.participantIds);
+
+  const populatedRoom: Room = {
+    id: roomData.id,
+    code: roomData.code,
+    participants: users,
+    admin: users.find((u) => u.id === roomData.adminId)!,
+  };
+
+  return populatedRoom;
+}

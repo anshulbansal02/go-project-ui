@@ -1,6 +1,6 @@
 import { config } from "@/config";
 import { HTTP } from "@/lib/Http";
-import { getUser as getStoreUser, setUser, setUserName } from "@/store/user";
+import { getUser as getStoreUser } from "@/store/user";
 
 const userApi = new HTTP(new URL("users", config.API_URL));
 
@@ -16,11 +16,7 @@ type PartialUser = {
 };
 
 export async function createUser(username?: string) {
-  const name = username ?? "Anon"; // to be replaced by name generation service
-
-  const user = await userApi.post<AuthenticatedUser>("/", { username: name });
-
-  setUser(user);
+  const user = await userApi.post<AuthenticatedUser>("/", { username });
 
   return user;
 }
@@ -33,8 +29,6 @@ export async function updateUserName(name: string) {
   await userApi.patch<void>(`/${user.id}`, {
     username: name,
   });
-
-  setUserName(name);
 }
 
 export async function getUser(userId: string) {

@@ -6,6 +6,7 @@ export type User = {
   id: string;
   name: string;
   secret: string;
+  isAnonymous: boolean;
 };
 
 export type UserState = User | undefined;
@@ -25,7 +26,7 @@ export function getUser() {
   return userStore.getState();
 }
 
-export function useUser() {
+export function useUser(): User {
   const user = userStore();
   if (!user) throw new Error("User is not created.");
   return user;
@@ -34,5 +35,6 @@ export function useUser() {
 export function setUserName(name: string) {
   userStore.setState(() => ({
     name,
+    isAnonymous: false,
   }));
 }

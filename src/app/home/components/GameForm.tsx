@@ -1,25 +1,33 @@
 import { Button, Input } from "@/components";
 import { type RoomCodeForm, RoomCodeModal } from "./RoomCodeModal";
 import { useForm } from "react-hook-form";
-import { useUser } from "@/store/user";
-import { createNewRoom, joinRoomWithCode } from "@/services/room";
+import { setUserName, useUser } from "@/store/user";
+import { createNewRoom } from "@/services/room";
 import { updateUserName } from "@/services/user";
 import useAction from "@/lib/hooks/useAction";
+import { useNavigate } from "react-router";
+import { startTransition } from "react";
+import { setRoom } from "@/store/room";
 
 export default function GameForm() {
   const user = useUser();
+  const navigate = useNavigate();
 
   const updateUser = async () => {
     const inputUsername = getValues("name");
     if (inputUsername != user.name) {
       await updateUserName(inputUsername);
+      setUserName(inputUsername);
     }
   };
 
   const { execute: handleJoinRoom, loading: loadingJoinRoom } = useAction(
     async (data: RoomCodeForm) => {
       await updateUser();
-      await joinRoomWithCode(data.code);
+
+      startTransition(() => {
+        navigate(`room/${data.code}`);
+      });
     }
   );
 
@@ -34,7 +42,13 @@ export default function GameForm() {
     async () => {
       await updateUser();
 
-      await createNewRoom();
+      const room = await createNewRoom();
+
+      setRoom(room);
+
+      startTransition(() => {
+        navigate(`room/${room.code}`);
+      });
     }
   );
 

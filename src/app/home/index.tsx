@@ -1,6 +1,6 @@
 import GameForm from "./components/GameForm";
 
-export function HomePage() {
+export default function HomePage() {
   return (
     <section className='p-4'>
       <header className='my-[16vh] text-center'>

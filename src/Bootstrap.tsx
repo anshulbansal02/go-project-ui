@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSocket } from "@/lib/WebSocket";
-import { getUser as getStoredUser } from "@/store/user";
+import { getUser as getStoredUser, setUser } from "@/store/user";
 import * as Events from "@/events";
 import { createUser } from "@/services/user";
 
@@ -15,10 +15,12 @@ export function Bootstrap({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     (async () => {
-      let user = getStoredUser();
+      let user;
+      user = getStoredUser();
 
       if (!user?.secret) {
         user = await createUser();
+        setUser({ ...user, isAnonymous: true });
       }
 
       if (isConnected) {
