@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { type User } from "./user";
 
-type RoomUser = Pick<User, "id" | "name">;
+export type RoomUser = Pick<User, "id" | "name">;
 
 export type Room = {
   id: string;

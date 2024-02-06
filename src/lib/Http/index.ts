@@ -1,3 +1,4 @@
+import { getUser } from "@/store/user";
 import axios, { AxiosInstance } from "axios";
 
 export class HTTP {
@@ -9,6 +10,13 @@ export class HTTP {
       paramsSerializer: (params) => {
         return new URLSearchParams(params).toString();
       },
+    });
+
+    this.transport.interceptors.request.use((request) => {
+      const token = getUser()?.secret;
+      if (token) request.headers.Authorization = `Bearer ${token}`;
+
+      return request;
     });
   }
 

@@ -1,6 +1,6 @@
 import { useEvent } from "@/lib/WebSocket/useEvent";
-import { addUserToRoom, setRoom, useRoom } from "@/store/room";
-import { Navigate, useParams } from "react-router";
+import { RoomUser, addUserToRoom, setRoom, useRoom } from "@/store/room";
+import { Navigate, useNavigate, useParams } from "react-router";
 import * as Events from "@/events";
 import { setUserName, useUser } from "@/store/user";
 import { getRoom, joinRoomWithCode } from "@/services/room";
@@ -8,15 +8,27 @@ import { getUser, updateUserName } from "@/services/user";
 
 import LobbyPage from "./(lobby)";
 import { Button, Input } from "@/components";
-import { useEffect } from "react";
+import { startTransition, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useSocket } from "@/lib/WebSocket";
+import { useToaster } from "@/providers/hooks";
+import { JoinRequestPrompt } from "./components/JoinRequestPrompt";
+import { Toast } from "@/store/toaster";
 
 export default function RoomPage() {
   const room = useRoom();
   const user = useUser();
   const params = useParams();
   const { socket } = useSocket();
+  const toaster = useToaster();
+  const navigate = useNavigate();
+
+  const requestToasts = useRef<
+    Array<{
+      toastId: Toast["id"];
+      user: RoomUser;
+    }>
+  >([]);
 
   const code = params["code"] as string;
 
@@ -34,31 +46,66 @@ export default function RoomPage() {
     }
   }, [room, code, user.isAnonymous]);
 
-  // For any user that joins the room and self when the request is accepted
-  useEvent<Events.RoomUserData>(Events.UserJoined, async (m) => {
-    // Request accepted
-    if (m.payload.userId === user.id) {
-      const room = await getRoom(m.payload.roomId);
-      setRoom(room);
-    }
-    // Some other user joined
-    else {
-      const user = await getUser(m.payload.userId);
-      addUserToRoom(user);
-    }
-  });
-
-  useEvent<Events.RequestData>(Events.JoinRequest, (m) => {
-    // Show notification to user using toaster
-  });
-
   const handleJoinRequestAction = (
-    action: "accepted" | "rejected",
+    action: "accept" | "reject",
     userId: string
   ) => {
-    console.log(action, userId);
-    // Emit action
+    socket.emit(Events.JoinRequest, {
+      type: action,
+      userId,
+      roomId: "",
+    } satisfies Events.RequestData);
   };
+
+  // A new user joined
+  useEvent<Events.RoomUserData>(Events.UserJoined, async (m) => {
+    const user = await getUser(m.payload.userId);
+    addUserToRoom(user);
+  });
+
+  // Request outcome
+  useEvent<Events.RequestData>(Events.JoinRequest, async (m) => {
+    if (m.payload.type === "accept") {
+      const room = await getRoom(m.payload.roomId);
+      setRoom(room);
+    } else if (m.payload.type === "reject") {
+      startTransition(() => navigate("/"));
+    }
+  });
+
+  // Join requests for admin
+  useEvent<Events.RequestData>(Events.JoinRequest, async (m) => {
+    if (m.payload.type === "request") {
+      const user = await getUser(m.payload.userId);
+
+      const toastId = toaster.toast({
+        persistent: true,
+        dismissible: false,
+        content: (
+          <JoinRequestPrompt
+            user={user}
+            onAction={(...args) => {
+              toaster.dismiss(toastId);
+              handleJoinRequestAction(...args);
+            }}
+          />
+        ),
+      });
+
+      // Add request toast to tracker
+      const existingRequestToastIndex = requestToasts.current.findIndex(
+        (t) => t.user.id === user.id
+      );
+      if (existingRequestToastIndex >= 0)
+        requestToasts.current[existingRequestToastIndex] = { toastId, user };
+      else requestToasts.current.push({ toastId, user });
+    } else if (m.payload.type === "cancel") {
+      const requestToast = requestToasts.current.find(
+        (t) => t.user.id === user.id
+      );
+      if (requestToast) toaster.dismiss(requestToast.toastId);
+    }
+  });
 
   const handleUpdateUserName = async (data: UserNameForm) => {
     await updateUserName(data.name);

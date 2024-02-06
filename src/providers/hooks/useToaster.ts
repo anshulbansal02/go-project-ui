@@ -18,7 +18,7 @@ const DEFAULT_TIMEOUT = 2500; // 2.5 seconds
 
 export function useToaster() {
   const make = useCallback((defaultConfig: Partial<ToastConfig>) => {
-    return (toastProps: Omit<Toast, "id"> | string) => {
+    return (toastProps: Omit<ToastConfig, "id"> | string) => {
       let config = defaultConfig;
       if (typeof toastProps === "string") config.title = toastProps;
       else config = { ...config, ...toastProps };
@@ -36,22 +36,25 @@ export function useToaster() {
     };
   }, []);
 
-  const destroy = useCallback((toastId: Toast["id"]) => {
-    const toasts = getToastList();
-
-    const toast = toasts.find((t: Toast) => t.id === toastId);
-
-    if (toast) {
-      removeToast(toastId);
-      if (toast?.onDismiss) toast.onDismiss(toastId);
-    }
-  }, []);
-
   const methods = {
     toast: make({}),
     error: make(defaultToastStyles.error),
-    dismiss: destroy,
+    dismiss: dismissToast,
   };
 
   return methods;
+}
+
+export function dismissToast(toastId: Toast["id"]) {
+  console.log("disimising");
+  const toasts = getToastList();
+
+  console.log("toasts", toasts);
+
+  const toast = toasts.find((t: Toast) => t.id === toastId);
+
+  if (toast) {
+    removeToast(toastId);
+    if (toast?.onDismiss) toast.onDismiss(toastId);
+  }
 }

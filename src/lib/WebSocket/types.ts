@@ -10,7 +10,7 @@ export type SocketEvent = string;
 export interface WebSocketMessage<PayloadType> {
   type: MessageType;
   eventName: SocketEvent;
-  meta?: Record<string, unknown>;
+  meta?: Record<string, unknown> | null;
   payload: PayloadType;
 }
 

@@ -94,15 +94,15 @@ export class MessageTranscoder {
       offset += 2;
       const meta = msgpackDecode(
         bytes.subarray(offset, offset + metaLength)
-      ) as Record<string, unknown> | undefined;
+      ) as Record<string, unknown> | null;
 
       // Extract the payload from the remaining bytes
-      offset += metaLength + 1;
+      offset += metaLength;
 
       const encodedPayload = bytes.subarray(offset);
+
       let payload;
-      if (encodedPayload.length)
-        payload = msgpackDecode(bytes.subarray(offset));
+      if (encodedPayload.length) payload = msgpackDecode(encodedPayload);
 
       // Create and return the WebSocketMessage object
       const decodedMessage: WebSocketMessage<unknown> = {

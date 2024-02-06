@@ -12,5 +12,7 @@ export interface RoomUserData {
 export const JoinRequest = "join_request";
 
 export interface RequestData {
+  type: "request" | "cancel" | "accept" | "reject";
+  roomId: string;
   userId: string;
 }

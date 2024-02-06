@@ -26,7 +26,7 @@ export function useToastList() {
 }
 
 export function getToastList() {
-  return toasterStore().toasts;
+  return toasterStore.getState().toasts;
 }
 
 export function addToast(toast: Toast) {
