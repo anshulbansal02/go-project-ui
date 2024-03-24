@@ -1,8 +1,9 @@
 import { ReactNode, createContext, useEffect, useState } from "react";
 import { Socket } from "./socket";
+import { SocketEvents } from "@/events";
 
 interface SocketContextValue {
-  socket: Socket | null;
+  socket: Socket<SocketEvents> | null;
   isConnected: boolean;
 }
 
@@ -18,7 +19,7 @@ interface SocketProviderProps {
 
 export function SocketProvider({ children, url }: SocketProviderProps) {
   const [isConnected, setIsConnected] = useState(false);
-  const [socket] = useState<Socket>(() => new Socket(url));
+  const [socket] = useState<Socket<SocketEvents>>(() => new Socket(url));
 
   useEffect(() => {
     socket.onOpen = () => setIsConnected(true);

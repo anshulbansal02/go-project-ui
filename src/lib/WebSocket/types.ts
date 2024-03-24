@@ -5,11 +5,11 @@ export enum MessageType {
   Response = 0x3,
 }
 
-export type SocketEvent = string;
+export type EventName = string;
 
 export interface WebSocketMessage<PayloadType> {
   type: MessageType;
-  eventName: SocketEvent;
+  eventName: EventName;
   meta?: Record<string, unknown> | null;
   payload: PayloadType;
 }
@@ -17,3 +17,16 @@ export interface WebSocketMessage<PayloadType> {
 export type Handler<PayloadType> = (
   message: WebSocketMessage<PayloadType>
 ) => void;
+
+export type EventsRegistry = Record<
+  EventName,
+  { clientPayload: unknown; serverPayload: unknown }
+>;
+
+export type EmitterQueueTask = { message: WebSocketMessage<unknown> };
+
+export type EventPayload<
+  T extends EventName,
+  K extends EventsRegistry,
+  P extends "client" | "server"
+> = K[T][P extends "client" ? "clientPayload" : "serverPayload"];

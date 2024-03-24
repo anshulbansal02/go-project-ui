@@ -1,8 +1,10 @@
 import {
   type Handler,
-  SocketEvent,
   WebSocketMessage,
   MessageType,
+  EventsRegistry,
+  EmitterQueueTask,
+  EventPayload,
 } from "./types";
 import { Dispatcher } from "./dispatcher";
 import { MessageTranscoder } from "./transcoder";
@@ -11,9 +13,9 @@ import { nanoid } from "nanoid";
 
 type SocketState = "connecting" | "open" | "closed";
 
-type EmitterQueueTask = { message: WebSocketMessage<unknown> };
+export type EventName<T extends EventsRegistry> = keyof T & string;
 
-export class Socket {
+export class Socket<Events extends EventsRegistry> {
   private socket: WebSocket;
   private dispatcher: Dispatcher;
   private transcoder: MessageTranscoder;
@@ -80,19 +82,21 @@ export class Socket {
     }
   }
 
-  on<PayloadType>(event: SocketEvent, handler: Handler<PayloadType>): string {
-    return this.dispatcher.addObserver(event, handler as Handler<unknown>);
+  on<
+    Event extends EventName<Events>,
+    EventHandler extends Handler<EventPayload<Event, Events, "server">>
+  >(event: Event, handler: EventHandler): string {
+    return this.dispatcher.addObserver(event, handler);
   }
 
-  once<PayloadType>(
-    event: SocketEvent,
-    handler: Handler<PayloadType>,
-    timeout?: number
-  ) {
+  once<
+    Event extends EventName<Events>,
+    EventHandler extends Handler<EventPayload<Event, Events, "server">>
+  >(event: Event, handler: EventHandler, timeout?: number) {
     const handlerId = this.dispatcher.addObserver(
       event,
       (message: WebSocketMessage<unknown>) => {
-        handler(message as WebSocketMessage<PayloadType>);
+        handler(message);
         this.dispatcher.removeObserver(handlerId);
       }
     );
@@ -108,7 +112,10 @@ export class Socket {
     return this.dispatcher.removeObserver(observerId);
   }
 
-  emit(event: SocketEvent, payload?: unknown) {
+  emit<
+    Event extends EventName<Events>,
+    Payload extends EventPayload<Event, Events, "client">
+  >(event: Event, payload: Payload) {
     const message: WebSocketMessage<unknown> = {
       type: MessageType.Notification,
       eventName: event,
@@ -118,10 +125,14 @@ export class Socket {
     this.emitterQueue.enqueueTask({ message });
   }
 
-  async request<ResponseType>(
-    event: SocketEvent,
-    payload?: unknown
-  ): Promise<WebSocketMessage<ResponseType>> {
+  async request<
+    Event extends EventName<Events>,
+    RequestPayload extends EventPayload<Event, Events, "client">,
+    ResponsePayload extends EventPayload<Event, Events, "server">
+  >(
+    event: Event,
+    payload?: RequestPayload
+  ): Promise<WebSocketMessage<ResponsePayload>> {
     const requestId = nanoid();
 
     const requestMessage: WebSocketMessage<unknown> = {
@@ -135,16 +146,14 @@ export class Socket {
 
     this.emitterQueue.enqueueTask({ message: requestMessage });
 
-    let responseResolver: (value: WebSocketMessage<ResponseType>) => void;
-    const responsePromise = new Promise<WebSocketMessage<ResponseType>>(
-      (resolve) => {
-        responseResolver = resolve;
-      }
+    let responseResolver: (value: WebSocketMessage<ResponsePayload>) => void;
+    const responsePromise = new Promise<WebSocketMessage<ResponsePayload>>(
+      (resolve) => (responseResolver = resolve)
     );
 
-    const handlerId = this.on<ResponseType>(event, (message) => {
+    const handlerId = this.on(event, (message) => {
       if (message.meta?.rId === requestId) {
-        responseResolver(message);
+        responseResolver(message as WebSocketMessage<ResponsePayload>);
         this.off(handlerId);
       }
     });

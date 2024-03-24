@@ -1,9 +1,10 @@
 import { useContext } from "react";
 import { SocketContext } from "./provider";
 import { Socket } from "./socket";
+import { SocketEvents } from "@/events";
 
 interface SocketValue {
-  socket: Socket;
+  socket: Socket<SocketEvents>;
   isConnected: false;
 }
 

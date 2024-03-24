@@ -1,11 +1,13 @@
 import { useSocket } from "./useSocket";
-import { Handler, SocketEvent } from "./types";
+import { EventPayload, Handler } from "./types";
 import { useEffect } from "react";
+import { SocketEvents } from "@/events";
+import { EventName } from "./socket";
 
-export function useEvent<PayloadType>(
-  event: SocketEvent,
-  handler: Handler<PayloadType>
-) {
+export function useEvent<
+  Event extends EventName<SocketEvents>,
+  EventHandler extends Handler<EventPayload<Event, SocketEvents, "server">>
+>(event: Event, handler: EventHandler) {
   const v = useSocket();
 
   useEffect(() => {

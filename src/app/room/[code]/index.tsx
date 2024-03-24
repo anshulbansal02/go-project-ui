@@ -1,7 +1,6 @@
 import { useEvent } from "@/lib/WebSocket/useEvent";
 import { RoomUser, addUserToRoom, setRoom, useRoom } from "@/store/room";
 import { Navigate, useNavigate, useParams } from "react-router";
-import * as Events from "@/events";
 import { setUserName, useUser } from "@/store/user";
 import { getRoom, joinRoomWithCode } from "@/services/room";
 import { getUser, updateUserName } from "@/services/user";
@@ -50,21 +49,21 @@ export default function RoomPage() {
     action: "accept" | "reject",
     userId: string
   ) => {
-    socket.emit(Events.JoinRequest, {
+    socket.emit("join_request", {
       type: action,
       userId,
       roomId: "",
-    } satisfies Events.RequestData);
+    });
   };
 
   // A new user joined
-  useEvent<Events.RoomUserData>(Events.UserJoined, async (m) => {
+  useEvent("user_joined", async (m) => {
     const user = await getUser(m.payload.userId);
     addUserToRoom(user);
   });
 
   // Request outcome
-  useEvent<Events.RequestData>(Events.JoinRequest, async (m) => {
+  useEvent("join_request", async (m) => {
     if (m.payload.type === "accept") {
       const room = await getRoom(m.payload.roomId);
       setRoom(room);
@@ -74,7 +73,7 @@ export default function RoomPage() {
   });
 
   // Join requests for admin
-  useEvent<Events.RequestData>(Events.JoinRequest, async (m) => {
+  useEvent("join_request", async (m) => {
     if (m.payload.type === "request") {
       const user = await getUser(m.payload.userId);
 

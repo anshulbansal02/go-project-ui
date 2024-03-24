@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSocket } from "@/lib/WebSocket";
 import { getUser as getStoredUser, setUser } from "@/store/user";
-import * as Events from "@/events";
 import { createUser } from "@/services/user";
 
 function SplashScreen() {
@@ -23,9 +22,9 @@ export function Bootstrap({ children }: { children: React.ReactNode }) {
       }
 
       if (isConnected) {
-        await socket.request(Events.AssociateClient, {
+        await socket.request("associate_client", {
           userSecret: user.secret,
-        } satisfies Events.AssociateClientData);
+        });
 
         setIsBootstrapped(true);
       }

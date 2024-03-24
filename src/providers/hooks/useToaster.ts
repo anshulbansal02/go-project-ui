@@ -46,13 +46,9 @@ export function useToaster() {
 }
 
 export function dismissToast(toastId: Toast["id"]) {
-  console.log("disimising");
   const toasts = getToastList();
 
-  console.log("toasts", toasts);
-
   const toast = toasts.find((t: Toast) => t.id === toastId);
-
   if (toast) {
     removeToast(toastId);
     if (toast?.onDismiss) toast.onDismiss(toastId);
